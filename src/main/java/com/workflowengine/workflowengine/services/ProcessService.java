@@ -17,6 +17,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static com.workflowengine.workflowengine.utils.Constants.*;
+
 
 @Service
 public class ProcessService {
@@ -44,9 +46,10 @@ public class ProcessService {
     // DONETODO 3 Create the Function for saving the process step in db
 
     public APIResponse createProcess(Integer workFlowId, String processName) {
-        APIResponse toReturnApiResponse = new APIResponse(404, "Error");
+        APIResponse toReturnApiResponse = new APIResponse(404, STRING_ERROR);
         try {
             //get the WorkFlowBluePrintModel
+            logger.debug("Create Process Called");
             WFTemplate wfTemplate = this.wfTemplateRepository.findById(workFlowId).get();
             LocalDateTime now = LocalDateTime.now();
             //Save the Process Step with the Name
@@ -75,39 +78,42 @@ public class ProcessService {
             ProcessDomain savedProcessModel = this.convertToProcessDomain(savedProcess, blueprintSteps.size(), 0, (int) u.getId(), u.getFirstName() + ' ' + u.getLastName());
 
             toReturnApiResponse.setStatus(200);
-            toReturnApiResponse.setDescription("Process Created");
+            toReturnApiResponse.setDescription(STRING_PROCESS_CREATED);
             toReturnApiResponse.setData(Collections.singletonList(savedProcessModel));
 
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
         }
         return toReturnApiResponse;
     }
 
     public APIResponse createProcessStep(List<Step> listToSave, Integer processID, Integer userId) {
-        APIResponse toReturnApiResponse = new APIResponse(404, "Error");
+        logger.debug("Create Process Step Called");
+        APIResponse toReturnApiResponse = new APIResponse(404, STRING_ERROR);
         List<AuditLog> toReturn = new ArrayList<>();
         LocalDateTime currentDate = LocalDateTime.now();
         try {
             for (int i = 0; i < listToSave.size(); i++) {
                 AuditLog toSave = this.convertToAuditLogFromStep(listToSave.get(i), processID, currentDate, userId);
                 if (i == 0) {
+                    toSave.setStatus(new Status(2));
                     toSave.setDeadline(this.getDeadline(listToSave.get(i).getDeadlinePeriod(), listToSave.get(i).getDeadlineUnit()));
                 }
                 toReturn.add(this.auditLogRepository.save(toSave));
             }
             toReturnApiResponse.setStatus(200);
-            toReturnApiResponse.setDescription("Process Created");
+            toReturnApiResponse.setDescription(STRING_PROCESS_STEP_CREATED);
             toReturnApiResponse.setData(Collections.singletonList(toReturn));
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
         }
 
         return toReturnApiResponse;
     }
 
     public APIResponse getProcessDetails(Integer processId) {
-        APIResponse toReturnApiResponse = new APIResponse(404, "Error");
+        logger.debug("Get Process Details Called");
+        APIResponse toReturnApiResponse = new APIResponse(404, STRING_ERROR);
         try {
 
             Process fetched = this.processRepository.findById(processId).get();
@@ -116,18 +122,19 @@ public class ProcessService {
             SysUser u = this.authPermissionService.getCurrentUser();
             ProcessDomain toAttach = this.convertToProcessDomain(fetched, size, count, fetched.getCreatedBy(), u.getFirstName() + ' ' + u.getLastName());
 
-            toReturnApiResponse.setDescription("Success");
+            toReturnApiResponse.setDescription(STRING_SUCCESS);
             toReturnApiResponse.setStatus(200);
             toReturnApiResponse.setData(Collections.singletonList(toAttach));
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
         }
 
         return toReturnApiResponse;
     }
 
     public APIResponse getAllProcess() {
-        APIResponse toReturnApiResponse = new APIResponse(404, "Error");
+        logger.debug("Get All Process Called");
+        APIResponse toReturnApiResponse = new APIResponse(404, STRING_ERROR);
         List<ProcessDomain> toReturn = new ArrayList<>();
         try {
             List<Process> toConvert = this.processRepository.findAll();
@@ -147,36 +154,38 @@ public class ProcessService {
 
             toReturnApiResponse.setData(Collections.singletonList(toReturn));
             toReturnApiResponse.setStatus(200);
-            toReturnApiResponse.setDescription("Success");
+            toReturnApiResponse.setDescription(STRING_SUCCESS);
 
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
         }
         return toReturnApiResponse;
     }
 
 
     public APIResponse getProcessStepList(Integer processId) {
-        APIResponse toReturnApiResponse = new APIResponse(404, "Error");
+        logger.debug("Get Process step list Called");
+        APIResponse toReturnApiResponse = new APIResponse(404, STRING_ERROR);
         List<ProcessStepDomain> toAttach = new ArrayList<>();
         try {
             List<AuditLog> fromDbProcessStepModels = this.auditLogRepository.findLatestAuditLogByProcessId(processId);
-            // DONETODO 2: return the DomainObject
+
             SysUser u = this.authPermissionService.getCurrentUser();
             for (AuditLog temp : fromDbProcessStepModels) {
                 toAttach.add(this.convertToProcessStepDomain(temp, u.getFirstName() + ' ' + u.getLastName()));
             }
             toReturnApiResponse.setData(Collections.singletonList(toAttach));
             toReturnApiResponse.setStatus(200);
-            toReturnApiResponse.setDescription("Success");
+            toReturnApiResponse.setDescription(STRING_SUCCESS);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
         }
         return toReturnApiResponse;
     }
 
     public APIResponse getProcessStepListForDiagram(Integer processId) {
-        APIResponse toReturnApiResponse = new APIResponse(404, "Error");
+        logger.debug("Get Process step list for diagram Called");
+        APIResponse toReturnApiResponse = new APIResponse(404, STRING_ERROR);
         List<ProcessStepDomain> toAttach = new ArrayList<>();
         try {
             List<AuditLog> fromDbProcessStepModels = this.auditLogRepository.findAllAuditLogByProcessId(processId);
@@ -186,20 +195,21 @@ public class ProcessService {
             }
             toReturnApiResponse.setData(Collections.singletonList(toAttach));
             toReturnApiResponse.setStatus(200);
-            toReturnApiResponse.setDescription("Success");
+            toReturnApiResponse.setDescription(STRING_SUCCESS);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
         }
         return toReturnApiResponse;
     }
 
     public APIResponse saveComment(Integer stepId, String stepComments) {
-        APIResponse toReturnApiResponse = new APIResponse(404, "Error");
+        logger.debug("Save commit called");
+        APIResponse toReturnApiResponse = new APIResponse(404, STRING_ERROR);
         try {
             AuditLog temp = this.auditLogRepository.findById(stepId).get();
             if (temp.getStatus().getStatusId() == 8) {
                 toReturnApiResponse.setStatus(500);
-                toReturnApiResponse.setDescription("Cannot save Comment, As process is Stopped");
+                toReturnApiResponse.setDescription(STRING_CANNOT_SAVE);
             } else {
 
                 temp.setComments(stepComments);
@@ -210,12 +220,12 @@ public class ProcessService {
                 toUpdateModifyDetails.setModifiedBy((int) u.getId());
                 toReturnApiResponse.setData(Collections.singletonList(this.convertToProcessStepDomain(temp, u.getFirstName() + ' ' + u.getLastName())));
                 toReturnApiResponse.setStatus(200);
-                toReturnApiResponse.setDescription("SuccessFully Updated");
+                toReturnApiResponse.setDescription(STRING_SUCCESS);
             }
 
 
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
         }
         return toReturnApiResponse;
     }
@@ -224,21 +234,22 @@ public class ProcessService {
     // if 0 then return the normal api call.
     // if 1 then return only the next step in the return for the internal api calls.
     public APIResponse updateStatus(Integer stepId, Integer statusId, Integer flag) {
-        APIResponse toReturnApiResponse = new APIResponse(404, "Error");
+        logger.debug("Update status called");
+        APIResponse toReturnApiResponse = new APIResponse(404, STRING_ERROR);
         try {
             //Fetching the AuditLog from the db.
             AuditLog temp = this.auditLogRepository.findById(stepId).get();
             // if status is already 8 (stopped), then we can't update the status
             if (temp.getStatus().getStatusId() == 8) {
                 toReturnApiResponse.setStatus(500);
-                toReturnApiResponse.setDescription("Cannot update status, As process is Stopped");
+                toReturnApiResponse.setDescription(STRING_CANNOT_UPDATE_STATUS);
                 return toReturnApiResponse;
             }
             // If the request is to update the status to 8 (stopped), only a step status cannot be changed
             // it should be done through other api.
             if (statusId == 8) {
                 toReturnApiResponse.setStatus(500);
-                toReturnApiResponse.setDescription("Cannot Apply Stop state to the Step, Only for WorkFlow");
+                toReturnApiResponse.setDescription(STRING_CANNOT_APPLY);
                 return toReturnApiResponse;
             }
 
@@ -276,10 +287,10 @@ public class ProcessService {
                     }
                     toReturnApiResponse.setData(Collections.singletonList(this.convertToProcessStepDomain(temp, u.getFirstName() + ' ' + u.getLastName())));
                     toReturnApiResponse.setStatus(200);
-                    toReturnApiResponse.setDescription("SuccessFully Updated");
+                    toReturnApiResponse.setDescription(STRING_SUCCESS);
                 } else {
                     toReturnApiResponse.setStatus(500);
-                    toReturnApiResponse.setDescription("Cannot Change the status, As next step is Already Started");
+                    toReturnApiResponse.setDescription(STRING_CANNOT_CHANGE_STATUS);
                 }
             } // if the next step is not present just updating the status of the step received.
             else {
@@ -293,7 +304,7 @@ public class ProcessService {
 
                 toReturnApiResponse.setData(Collections.singletonList(this.convertToProcessStepDomain(temp, u.getFirstName() + ' ' + u.getLastName())));
                 toReturnApiResponse.setStatus(200);
-                toReturnApiResponse.setDescription("SuccessFully Updated");
+                toReturnApiResponse.setDescription(STRING_SUCCESS);
             }
             this.processRepository.save(currentProcess);
 
@@ -316,17 +327,19 @@ public class ProcessService {
             }
 
         } catch (NullPointerException e) {
-            toReturnApiResponse.setDescription("You have not set the deadline in the WorkFlow");
+            toReturnApiResponse.setDescription(STRING_SET_DEADLINE);
+            logger.error(e.getMessage());
         } catch (Exception e) {
-            toReturnApiResponse.setDescription("Some Exception Occurred, Check logs");
-            e.printStackTrace();
+            toReturnApiResponse.setDescription(STRING_SOME_EXCEPTION);
+            logger.error(e.getMessage());
         }
 
         return toReturnApiResponse;
     }
 
     public APIResponse updateStatusAPI(Integer stepId, Integer statusId) {
-        APIResponse toReturnApiResponse = new APIResponse(404, "Error");
+        logger.debug("Update status API called");
+        APIResponse toReturnApiResponse = new APIResponse(404, STRING_ERROR);
         toReturnApiResponse = this.updateStatus(stepId, statusId, 1);
 
         return toReturnApiResponse;
@@ -334,6 +347,7 @@ public class ProcessService {
     }
 
     private AuditLog findNextAuditLogInList(List<AuditLog> listOfNextAuditLogs, Integer stepId) {
+        logger.debug("Find next audit log in list called");
         AuditLog toReturn = new AuditLog();
         for (int i = 0; i < listOfNextAuditLogs.size(); i++) {
             if (listOfNextAuditLogs.get(i).getAuditId() == stepId) {
@@ -348,21 +362,23 @@ public class ProcessService {
 
 
     public APIResponse getProcessStepList() {
-        APIResponse toReturnApiResponse = new APIResponse(404, "Error");
+        logger.debug("Get process step list called");
+        APIResponse toReturnApiResponse = new APIResponse(404, STRING_ERROR);
         try {
             List<Status> toAttach = this.statusRepository.findAll();
             toReturnApiResponse.setStatus(200);
-            toReturnApiResponse.setDescription("List Fetched");
+            toReturnApiResponse.setDescription(STRING_SUCCESS);
             toReturnApiResponse.setData(Collections.singletonList(toAttach));
 
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
         }
         return toReturnApiResponse;
     }
 
     public APIResponse stopProcess(Integer processId) {
-        APIResponse toReturnApiResponse = new APIResponse(404, "Error");
+        logger.debug("Stop process called");
+        APIResponse toReturnApiResponse = new APIResponse(404, STRING_ERROR);
         try {
             Process toStop = this.processRepository.findById(processId).get();
             toStop.setModifiedOn(LocalDateTime.now());
@@ -378,11 +394,11 @@ public class ProcessService {
                 this.auditLogRepository.save(toSave);
             }
 
-            toReturnApiResponse.setDescription("Process Stopped Successfully");
+            toReturnApiResponse.setDescription(STRING_SUCCESS);
             toReturnApiResponse.setStatus(200);
 
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
         }
         return toReturnApiResponse;
     }
@@ -459,11 +475,11 @@ public class ProcessService {
 
     public LocalDateTime getDeadline(int period, String unit) {
         LocalDateTime toSend = LocalDateTime.now();
-        if (unit.equals("Hour")) {
+        if (unit.equals(STRING_HOUR)) {
             toSend = toSend.plusHours(period);
-        } else if (unit.equals("Days")) {
+        } else if (unit.equals(STRING_DAYS)) {
             toSend = toSend.plusDays(period);
-        } else if (unit.equals("Months")) {
+        } else if (unit.equals(STRING_MONTHS)) {
             toSend = toSend.plusMonths(period);
         }
         return toSend;

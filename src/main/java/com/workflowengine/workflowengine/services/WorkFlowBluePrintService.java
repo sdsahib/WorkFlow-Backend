@@ -5,6 +5,8 @@ import com.workflowengine.workflowengine.domain.*;
 import com.workflowengine.workflowengine.model.*;
 import com.workflowengine.workflowengine.repository.*;
 import org.hibernate.exception.ConstraintViolationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
@@ -14,6 +16,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+
+import static com.workflowengine.workflowengine.utils.Constants.*;
 
 @Service
 public class WorkFlowBluePrintService {
@@ -38,10 +42,10 @@ public class WorkFlowBluePrintService {
     @Autowired
     private AuthPermissionService authPermissionService;
 
-
+    private final Logger logger = LoggerFactory.getLogger(WorkFlowBluePrintService.class);
 
     public APIResponse createNewProcessBluePrintService(String name) {
-        APIResponse returnAPIResponse = new APIResponse(404, "Error");
+        APIResponse returnAPIResponse = new APIResponse(404, STRING_ERROR);
         WFTemplate wfTemplate = new WFTemplate();
         wfTemplate.setName(name);
         try {
@@ -58,7 +62,7 @@ public class WorkFlowBluePrintService {
                 wfTemplate.setModifiedOn(LocalDateTime.now());
                 WFTemplate saved = this.wfTemplateRepository.save(wfTemplate);
                 returnAPIResponse.setStatus(200);
-                returnAPIResponse.setDescription("Successful Created");
+                returnAPIResponse.setDescription(STRING_SUCCESS);
                 WorkFlowBluePrintDomain temporary = new WorkFlowBluePrintDomain();
                 temporary.setId(saved.getWfTemplateId());
                 temporary.setWorkFlowName(saved.getName());
@@ -70,9 +74,9 @@ public class WorkFlowBluePrintService {
 
             }
         } catch (DataAccessException e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
             returnAPIResponse.setStatus(500);
-            returnAPIResponse.setDescription("Error Saving WorkflowBlueprint" + e.getMessage());
+            returnAPIResponse.setDescription(STRING_ERROR + e.getMessage());
         }
 
         return returnAPIResponse;
@@ -80,7 +84,7 @@ public class WorkFlowBluePrintService {
 
 
     public APIResponse getAllWorkFlowList() {
-        APIResponse toReturnAPIResponse = new APIResponse(404, "Error");
+        APIResponse toReturnAPIResponse = new APIResponse(404, STRING_ERROR);
 
         try {
             List<WFTemplate> list = this.wfTemplateRepository.findAll();
@@ -97,9 +101,10 @@ public class WorkFlowBluePrintService {
 
             toReturnAPIResponse.setData(Collections.singletonList(domainResult));
             toReturnAPIResponse.setStatus(200);
-            toReturnAPIResponse.setDescription("Success");
+            toReturnAPIResponse.setDescription(STRING_SUCCESS);
         } catch (DataAccessException e) {
-            toReturnAPIResponse.setDescription("Error Fetching " + e.getMessage());
+            logger.error(e.getMessage());
+            toReturnAPIResponse.setDescription(STRING_ERROR + e.getMessage());
 
         }
 
@@ -108,7 +113,7 @@ public class WorkFlowBluePrintService {
     }
 
     public APIResponse createBluePrintStep(WorkFlowStepDomain workFlowStepDomain) {
-        APIResponse toReturnApiResponse = new APIResponse(404, "Error");
+        APIResponse toReturnApiResponse = new APIResponse(404, STRING_ERROR);
 
         Step workFlowStep = this.convertToStepFromWorkFlowStepDomain(workFlowStepDomain);
         try {
@@ -116,24 +121,23 @@ public class WorkFlowBluePrintService {
             //setting the active bit
             workFlowStep.setActive(true);
             workFlowStep.setDeadlinePeriod(3);
-            workFlowStep.setDeadlineUnit("Months");
+            workFlowStep.setDeadlineUnit(STRING_MONTHS);
             Step temp = this.stepRepository.save(workFlowStep);
             WorkFlowStepDomain tempToReturnDomain = this.convertToWorkFlowStepDomainFromStep(temp);
             tempToReturnDomain.setSequenceNumber(sequenceNumber);
             toReturnApiResponse.setData(Collections.singletonList(tempToReturnDomain));
             toReturnApiResponse.setStatus(200);
-            toReturnApiResponse.setDescription("Success");
+            toReturnApiResponse.setDescription(STRING_SUCCESS);
 
         } catch (Exception e) {
-            // Add loger statements
-            e.printStackTrace();
+            logger.error(e.getMessage());
         }
 
         return toReturnApiResponse;
     }
 
     public APIResponse updateBluePrintStep(WorkFlowStepDomain workFlowStepDomain) {
-        APIResponse toReturnApiResponse = new APIResponse(404, "Error");
+        APIResponse toReturnApiResponse = new APIResponse(404, STRING_ERROR);
 
         //fetch the particular record from step table modify it and update it.
         //create an entry in the stepHistory table with updated as status
@@ -156,20 +160,20 @@ public class WorkFlowBluePrintService {
             tempWorkFlowStepDomain.setSequenceNumber(sequenceNumber);
             toReturnApiResponse.setData(Collections.singletonList(tempWorkFlowStepDomain));
             toReturnApiResponse.setStatus(200);
-            toReturnApiResponse.setDescription("Success");
+            toReturnApiResponse.setDescription(STRING_SUCCESS);
 
             //TODO create an entry in the history table if required
 //            this.workFlowBluePrintStepHistoryRepository.save(this.convertToWorkFlowStepHistory(temp, "Updated"));
 
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
         }
         return toReturnApiResponse;
     }
 
 
     public APIResponse getAllBluePrintSteps(Integer workflowId) {
-        APIResponse toReturnApiResponse = new APIResponse(404, "Error");
+        APIResponse toReturnApiResponse = new APIResponse(404, STRING_ERROR);
         List<Step> tempListToAttach;
         List<WorkFlowStepDomain> listToAttach = new ArrayList<>();
         try {
@@ -180,11 +184,10 @@ public class WorkFlowBluePrintService {
             }
             toReturnApiResponse.setData(Collections.singletonList(listToAttach));
             toReturnApiResponse.setStatus(200);
-            toReturnApiResponse.setDescription("Fetched");
+            toReturnApiResponse.setDescription(STRING_SUCCESS);
 
         } catch (Exception e) {
-            //replace with logger
-            e.printStackTrace();
+            logger.error(e.getMessage());
         }
 
         toReturnApiResponse.setData(Collections.singletonList(listToAttach));
@@ -192,7 +195,7 @@ public class WorkFlowBluePrintService {
     }
 
     public APIResponse getAllBluePrintStepList(Integer blueprintId) {
-        APIResponse toReturnApiResponse = new APIResponse(404, "Error");
+        APIResponse toReturnApiResponse = new APIResponse(404, STRING_ERROR);
         List<Step> tempListToAttach;
         List<WorkFlowStepListDomain> listToAttach = new ArrayList<>();
         try {
@@ -201,12 +204,12 @@ public class WorkFlowBluePrintService {
             for (Step temp : tempListToAttach) {
                 listToAttach.add(this.convertToWorkFlowStepListDomainFromStep(temp));
             }
-            toReturnApiResponse.setDescription("List Fetched");
+            toReturnApiResponse.setDescription(STRING_SUCCESS);
             toReturnApiResponse.setData(Collections.singletonList(listToAttach));
             toReturnApiResponse.setStatus(200);
 
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
         }
         return toReturnApiResponse;
 
@@ -214,7 +217,7 @@ public class WorkFlowBluePrintService {
 
 
     public APIResponse deleteWorkFlowBluePrintStepByWorkFlowId(Integer stepId ) {
-        APIResponse toReturnApiResponse = new APIResponse(404, "Error");
+        APIResponse toReturnApiResponse = new APIResponse(404, STRING_ERROR);
         try {
 
             //fetching the record and setting the bit to be inactive
@@ -230,21 +233,21 @@ public class WorkFlowBluePrintService {
             this.wfTemplateRepository.save(toUpdateModifiedDetails);
 
             toReturnApiResponse.setStatus(200);
-            toReturnApiResponse.setDescription("Deleted SuccessFully");
+            toReturnApiResponse.setDescription(STRING_SUCCESS);
         } catch (ConstraintViolationException e) {
             // This row trying to delete is being refrences as foreign can nnot be deleted.
-            toReturnApiResponse.setDescription("Cannot Be Deleted");
-            System.out.println("Cannot be deleted");
+            toReturnApiResponse.setDescription(STRING_ERROR);
+
         } catch (Exception e) {
             //replace with proper Exception and Logger
-            e.printStackTrace();
+            logger.error(e.getMessage());
         }
 
         return toReturnApiResponse;
     }
 
     public APIResponse assignBluePrintStepToGroup(StepAssigneeDomain stepAssigneeDomain) {
-        APIResponse toReturnApiResponse = new APIResponse(404, "Error");
+        APIResponse toReturnApiResponse = new APIResponse(404, STRING_ERROR);
         try {
 
             for (int i = 0; i < stepAssigneeDomain.getGroupModelList().size(); i++) {
@@ -264,10 +267,10 @@ public class WorkFlowBluePrintService {
             toUpdateModifiedBy.setModifiedOn(LocalDateTime.now());
             this.wfTemplateRepository.save(toUpdateModifiedBy);
             toReturnApiResponse.setStatus(200);
-            toReturnApiResponse.setDescription("SuccessFully Assigned");
+            toReturnApiResponse.setDescription(STRING_SUCCESS);
             toReturnApiResponse.setData(Collections.singletonList(stepAssigneeDomain));
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
         }
         return toReturnApiResponse;
 
@@ -275,7 +278,7 @@ public class WorkFlowBluePrintService {
 
 
     public APIResponse getAssigneeBluePrintStepDetails(Integer stepId) {
-        APIResponse toReturnApiResponse = new APIResponse(404, "Error");
+        APIResponse toReturnApiResponse = new APIResponse(404, STRING_ERROR);
         try {
             //getting the step id so that we can find in the table the corresponding assignee detail.
             List<StepAssignee> fetched = this.stepAssigneeRepository.findByStepId(stepId);
@@ -293,18 +296,18 @@ public class WorkFlowBluePrintService {
             }
 
             toReturnApiResponse.setStatus(200);
-            toReturnApiResponse.setDescription("Fetched Successfully");
+            toReturnApiResponse.setDescription(STRING_SUCCESS);
             toReturnApiResponse.setData(Collections.singletonList(converted));
 
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
         }
         return toReturnApiResponse;
     }
 
 
     public APIResponse createWorkFlowStepFlow(Integer stepId, Integer statusId, Integer childStepId) {
-        APIResponse toReturnApiResponse = new APIResponse(404, "Error");
+        APIResponse toReturnApiResponse = new APIResponse(404, STRING_ERROR);
         try {
             //WorkFlowBluePrintStepFlowDomain
             FlowIdentity temp = new FlowIdentity(stepId, statusId, childStepId);
@@ -318,11 +321,11 @@ public class WorkFlowBluePrintService {
             this.wfTemplateRepository.save(toUpdatedModifiedDetail);
             WorkFlowBluePrintStepFlowDomain temp1 = this.convertToWorkFlowBluePrintStepFlowDomainFromFlow(flow);
 
-            toReturnApiResponse.setDescription("Flow Created Successfully");
+            toReturnApiResponse.setDescription(STRING_SUCCESS);
             toReturnApiResponse.setStatus(200);
             toReturnApiResponse.setData(Collections.singletonList(temp1));
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
         }
 
         return toReturnApiResponse;
@@ -337,7 +340,7 @@ public class WorkFlowBluePrintService {
     }
 
     public APIResponse getAllFlowsByStep(Integer stepId) {
-        APIResponse toReturnApiResponse = new APIResponse(404, "Error");
+        APIResponse toReturnApiResponse = new APIResponse(404, STRING_ERROR);
 
         try {
             List<Flow> fetchedList = this.flowRepository.findByStepId(stepId);
@@ -348,19 +351,19 @@ public class WorkFlowBluePrintService {
                 convertedList.add(this.convertToWorkFlowBluePrintStepFlowDomainFromFlow(temp));
             }
 
-            toReturnApiResponse.setDescription("Success Fetched");
+            toReturnApiResponse.setDescription(STRING_SUCCESS);
             toReturnApiResponse.setStatus(200);
             toReturnApiResponse.setData(Collections.singletonList(convertedList));
 
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
         }
 
         return toReturnApiResponse;
     }
 
     public APIResponse deleteFlowOfBluePrintStep(Integer stepId, Integer statusId, Integer childStatusId) {
-        APIResponse toReturnApiResponse = new APIResponse(404, "Error");
+        APIResponse toReturnApiResponse = new APIResponse(404, STRING_ERROR);
         try {
             this.flowRepository.deleteById(new FlowIdentity(stepId, statusId, childStatusId));
             Step toFetchWFTemplateIdFrom = this.stepRepository.findById(stepId).get();
@@ -369,10 +372,10 @@ public class WorkFlowBluePrintService {
             toUpdateModifiedDetails.setModifiedBy((int) u.getId());
             toUpdateModifiedDetails.setModifiedOn(LocalDateTime.now());
             this.wfTemplateRepository.save(toUpdateModifiedDetails);
-            toReturnApiResponse.setDescription("Flow Deleted");
+            toReturnApiResponse.setDescription(STRING_SUCCESS);
             toReturnApiResponse.setStatus(200);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
         }
         return toReturnApiResponse;
     }
@@ -380,7 +383,7 @@ public class WorkFlowBluePrintService {
 
     public APIResponse updateDeadline(Integer stepId, String deadline, String period) {
 
-        APIResponse toReturnApiResponse = new APIResponse(404, "Error");
+        APIResponse toReturnApiResponse = new APIResponse(404, STRING_ERROR);
         try {
             Step toUpdate = this.stepRepository.findById(stepId).get();
             toUpdate.setDeadlinePeriod(Integer.valueOf(deadline));
@@ -394,32 +397,32 @@ public class WorkFlowBluePrintService {
             this.wfTemplateRepository.save(toUpdatedModifiedDetails);
             WorkFlowStepDomain temp = this.convertToWorkFlowStepDomainFromStep(toUpdate);
             toReturnApiResponse.setStatus(200);
-            toReturnApiResponse.setDescription("Deadline Updated");
+            toReturnApiResponse.setDescription(STRING_SUCCESS);
             toReturnApiResponse.setData(Collections.singletonList(temp));
 
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
         }
         return toReturnApiResponse;
     }
 
     public APIResponse getProcessStepList() {
-        APIResponse toReturnApiResponse = new APIResponse(404, "Error");
+        APIResponse toReturnApiResponse = new APIResponse(404, STRING_ERROR);
         try {
             List<Status> toAttach = this.statusRepository.findAll();
             toReturnApiResponse.setStatus(200);
-            toReturnApiResponse.setDescription("List Fetched");
+            toReturnApiResponse.setDescription(STRING_SUCCESS);
             toReturnApiResponse.setData(Collections.singletonList(toAttach));
 
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
         }
         return toReturnApiResponse;
     }
 
 
 //    public APIResponse getAllProcessFlows(Integer processId) {
-//        APIResponse toReturnApiResponse = new APIResponse(404, "Error");
+//        APIResponse toReturnApiResponse = new APIResponse(404, STRING_ERROR);
 //        try {
 //            List<Flow> toAttach = this.flowRepository.findAllByProcessIdOrderByStepId(processId);
 //        }catch (Exception e){

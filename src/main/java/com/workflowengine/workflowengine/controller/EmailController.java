@@ -7,13 +7,16 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import static com.workflowengine.workflowengine.utils.Constants.CONTROLLER_PATH_EMAIL;
+import static com.workflowengine.workflowengine.utils.Constants.PATH_EMAIL;
+
 @RestController
-@RequestMapping("/email")
+@RequestMapping(CONTROLLER_PATH_EMAIL)
 public class EmailController {
     @Autowired
     private EmailService emailService;
 
-    @GetMapping("/sampleEmail")
+    @GetMapping(PATH_EMAIL)
     private APIResponse sendEmail(){
         return this.emailService.sendSampleEmail();
     }

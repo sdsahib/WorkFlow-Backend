@@ -7,24 +7,23 @@ import com.workflowengine.workflowengine.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import static com.workflowengine.workflowengine.utils.Constants.*;
+
 @RestController
-@RequestMapping("/user")
+@RequestMapping(CONTROLLER_PATH_USER)
 public class UserController {
 
     @Autowired
     private UserService userService;
 
-
-
-    @GetMapping("/sampleList")
+    @GetMapping(PATH_SAMPLE_LIST)
     APIResponse getSampleList(){
         return this.userService.getSampleList();
     }
 
-    @PostMapping("/sign-up")
+    @PostMapping(PATH_SIGN_UP)
     public APIResponse signUp(@RequestBody Credentials user){
         return this.userService.signUp(user);
     }
-
 
 }

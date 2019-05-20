@@ -47,8 +47,8 @@ public class SwaggerConfig {
         return new Docket(DocumentationType.SWAGGER_2).select()
                 .apis(RequestHandlerSelectors.basePackage("com.workflowengine.workflowengine.controller")).build()
                 .apiInfo(apiInfo())
-                .host("kaveri.teksystems.com")
-                .pathMapping(contextPath)
+                .host("localhost:8080")
+//                .pathMapping(contextPath)
                 .securityContexts(Collections.singletonList(securityContext()))
                 .securitySchemes(Collections.singletonList(apiKey()));
     }

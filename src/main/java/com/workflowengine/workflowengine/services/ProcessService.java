@@ -268,7 +268,7 @@ public class ProcessService {
                     // updating the status of the step received.
                     AuditLog toSave = this.createNewAuditLogObject(temp, (int) u.getId());
                     toSave.setStatus(new Status(statusId));
-                    this.auditLogRepository.save(toSave);
+                    temp = this.auditLogRepository.save(toSave);
                     currentProcess.setStatusId(this.statusRepository.findById(statusId).get());
                     currentProcess.setModifiedBy((int) u.getId());
                     currentProcess.setModifiedOn(LocalDateTime.now());
@@ -282,7 +282,7 @@ public class ProcessService {
                         Step toFetchDeadlineFrom = this.stepRepository.findById(next.getStepId()).get();
                         //updating the deadline to required, from current time.
                         next.setDeadline(this.getDeadline(toFetchDeadlineFrom.getDeadlinePeriod(), toFetchDeadlineFrom.getDeadlineUnit()));
-                        this.auditLogRepository.save(next);
+                        temp = this.auditLogRepository.save(next);
                         currentProcess.setStatusId(this.statusRepository.findById(2).get());
                     }
                     toReturnApiResponse.setData(Collections.singletonList(this.convertToProcessStepDomain(temp, u.getFirstName() + ' ' + u.getLastName())));
@@ -297,7 +297,7 @@ public class ProcessService {
 
                 AuditLog toSave = this.createNewAuditLogObject(temp, (int) u.getId());
                 toSave.setStatus(new Status(statusId));
-                this.auditLogRepository.save(toSave);
+                temp = this.auditLogRepository.save(toSave);
                 currentProcess.setStatusId(this.statusRepository.findById(statusId).get());
                 currentProcess.setModifiedBy((int) u.getId());
                 currentProcess.setModifiedOn(LocalDateTime.now());
@@ -317,8 +317,8 @@ public class ProcessService {
                 // if there is next element present and the status to be updated is completed
                 // then return the next stepId and statusId of the next step, else return the current stepId and statusId.
                 if (next.getAuditId() != null && statusId == 5) {
-                    toReturn.setStatusId(next.getStatus().getStatusId());
-                    toReturn.setStepId(next.getAuditId());
+                    toReturn.setStatusId(temp.getStatus().getStatusId());
+                    toReturn.setStepId(temp.getAuditId());
                 } else {
                     toReturn.setStatusId(temp.getStatus().getStatusId());
                     toReturn.setStepId(temp.getAuditId());

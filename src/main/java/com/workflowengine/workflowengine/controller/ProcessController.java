@@ -16,7 +16,7 @@ public class ProcessController {
 
     @GetMapping(PATH_LAUNCH)
     private APIResponse createProcess(@RequestParam Integer workFlowId,
-                                      @RequestParam String processName) {
+                                          @RequestParam String processName) {
         return this.processService.createProcess(workFlowId, processName);
     }
 

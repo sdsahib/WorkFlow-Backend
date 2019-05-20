@@ -45,6 +45,8 @@ public class UserService {
         return (List<GroupDomain>) serviceLocator.getData("/role/getAll", params, List.class).getBody();
     }
 
+    //TODO:
+
 
     public APIResponse signUp(Credentials user) {
         APIResponse toReturnApiResponse = new APIResponse(404, "Error");

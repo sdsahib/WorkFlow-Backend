@@ -17,6 +17,8 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, Integer> {
     List<AuditLog> findByProcess(Process process);
 
 
+
+
     @Query("SELECT u FROM AuditLog u WHERE u.modifiedOn IN (SELECT MAX(v.modifiedOn) FROM AuditLog v WHERE u.process = v.process AND u.stepId = v.stepId) AND Processid = ?1 ORDER BY Stepid")
     List<AuditLog> findLatestAuditLogByProcessId(Integer processId);
 

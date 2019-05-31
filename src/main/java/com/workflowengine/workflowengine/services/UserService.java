@@ -7,10 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class UserService {
@@ -41,8 +38,19 @@ public class UserService {
     }
 
     public List<GroupDomain> getAllRole(){
-        Map<String, Object> params = new HashMap<>();
-        return (List<GroupDomain>) serviceLocator.getData("/role/getAll", params, List.class).getBody();
+        List<GroupDomain> toReturn = new ArrayList<>();
+        GroupDomain temp = new GroupDomain();
+        temp.setId(1);
+        temp.setName("Developer");
+        temp.setDescription("Developer Role");
+        toReturn.add(temp);
+
+        temp = new GroupDomain();
+        temp.setId(2);
+        temp.setName("Admin");
+        temp.setDescription("Admin Role");
+        toReturn.add(temp);
+        return toReturn;
     }
 
     //TODO:
